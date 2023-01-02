@@ -15,11 +15,11 @@ export const normalizeLimit = (value: string | string[] | undefined): number => 
   const raw = Array.isArray(value) ? value[0] : value
   const parsed = Number(raw)
 
-  if (!raw || Number.isNaN(parsed) || parsed <= 0) {
+  if (!raw || Number.isNaN(parsed) || !Number.isFinite(parsed) || parsed <= 0) {
     return DEFAULT_LIMIT
   }
 
-  return Math.min(parsed, MAX_LIMIT)
+  return Math.min(Math.floor(parsed), MAX_LIMIT)
 }
 
 export const filterArtworks = (

@@ -5,6 +5,7 @@ import { filterArtworks, normalizeLimit, normalizeQuery } from '../../lib/artwor
 type SuccessData = {
   data: typeof artworks
   total: number
+  returned: number
 }
 
 type ErrorData = {
@@ -23,11 +24,13 @@ export default function handler(
   try {
     const searchTerm = normalizeQuery(req.query.search)
     const limit = normalizeLimit(req.query.limit)
-    const filtered = filterArtworks(artworks, searchTerm, limit)
+    const matches = filterArtworks(artworks, searchTerm, artworks.length)
+    const filtered = matches.slice(0, limit)
 
     return res.status(200).json({
       data: filtered,
-      total: filtered.length,
+      total: matches.length,
+      returned: filtered.length,
     })
   } catch {
     // Keeps API responses predictable in production failures.
