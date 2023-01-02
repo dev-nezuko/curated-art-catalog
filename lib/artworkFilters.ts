@@ -12,8 +12,12 @@ const firstValue = (value: QueryValue): string | undefined =>
 export const foldText = (value: string): string =>
   value.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase()
 
+// Commas and semicolons separate words, so "velazquez, 1656" reads as two terms.
 export const normalizeQuery = (value: QueryValue): string =>
-  foldText(firstValue(value) ?? '').trim().replace(/\s+/g, ' ')
+  foldText(firstValue(value) ?? '')
+    .replace(/[,;]+/g, ' ')
+    .trim()
+    .replace(/\s+/g, ' ')
 
 // Only plain decimal numbers count: "0x10", "1e3" or "12abc" fall back to the default
 // instead of being coerced by Number().

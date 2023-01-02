@@ -1,114 +1,106 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useId, useState } from 'react'
 import Head from 'next/head'
+import ArtworkCard from '../components/ArtworkCard'
+import { useArtworkSearch } from '../lib/useArtworkSearch'
 import styles from '../styles/Home.module.css'
-import { Artwork } from '../data/artworks'
+
+const plural = (count: number) => `${count} work${count === 1 ? '' : 's'}`
 
 const Home = () => {
-  const [artworks, setArtworks] = useState<Artwork[]>([])
-  const [search, setSearch] = useState<string>('')
-  const [isLoading, setIsLoading] = useState<boolean>(true)
-  const [error, setError] = useState<string>('')
+  const [search, setSearch] = useState('')
+  const { state, retry } = useArtworkSearch(search)
+  const searchId = useId()
+  const hintId = useId()
 
-  useEffect(() => {
-    let isMounted = true
+  const statusText =
+    state.status === 'loading'
+      ? 'Looking through the collection…'
+      : state.status === 'error'
+        ? 'The collection could not be loaded.'
+        : search.trim()
+          ? `${plural(state.total)} match “${search.trim()}”`
+          : `${plural(state.total)} on view`
 
-    const fetchArtworks = async () => {
-      try {
-        const query = search.trim() ? `?search=${encodeURIComponent(search.trim())}` : ''
-        const response = await fetch(`/api/artworks${query}`)
-
-        if (!response.ok) {
-          throw new Error('Unable to fetch artworks')
-        }
-
-        const payload = (await response.json()) as { data: Artwork[] }
-
-        if (isMounted) {
-          setArtworks(payload.data)
-          setError('')
-        }
-      } catch {
-        if (isMounted) {
-          setError('Could not load artworks right now. Please try again.')
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false)
-        }
-      }
-    }
-
-    fetchArtworks()
-
-    return () => {
-      isMounted = false
-    }
-  }, [search])
-
-  const updateSearch = (value: string) => {
-    setIsLoading(true)
-    setSearch(value)
-  }
-
-  const resultLabel = useMemo(() => {
-    if (isLoading) {
-      return 'Loading artworks...'
-    }
-
-    if (error) {
-      return error
-    }
-
-    return `${artworks.length} artwork${artworks.length === 1 ? '' : 's'} found`
-  }, [artworks.length, error, isLoading])
+  const isEmpty = state.status === 'ready' && state.artworks.length === 0
 
   return (
-    <div className={styles.container}>
+    <>
       <Head>
-        <title>Art Gallery</title>
-        <meta name="description" content="Search and browse curated artworks." />
+        <title>Gallery Space · Permanent collection</title>
+        <meta name="description" content="Search a small permanent collection by title, artist, medium or year." />
       </Head>
 
-      <main className={styles.main}>
-        <h1 className={styles.title}>Art Gallery</h1>
+      <div className={styles.page}>
+        <header className={styles.masthead}>
+          <p className={styles.kicker}>Gallery Space</p>
+          <h1 className={styles.title}>The permanent collection</h1>
+          <p className={styles.intro}>
+            Five centuries of painting and print in one room. Search by title, artist, medium or year; accents are optional.
+          </p>
+        </header>
 
-        <p className={styles.description}>
-          Explore classic artwork and filter by title, artist, or medium.
-        </p>
+        <main className={styles.main}>
+          <form className={styles.search} role="search" onSubmit={(event) => event.preventDefault()}>
+            <label className={styles.searchLabel} htmlFor={searchId}>
+              Search the collection
+            </label>
+            <input
+              id={searchId}
+              className={styles.searchInput}
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="velazquez, woodblock, 1889"
+              aria-describedby={hintId}
+              autoComplete="off"
+            />
+            <p id={hintId} className={styles.status} role="status" aria-live="polite">
+              {statusText}
+            </p>
+          </form>
 
-        <label className={styles.searchLabel} htmlFor="search">
-          Search artwork
-        </label>
-        <input
-          id="search"
-          className={styles.searchInput}
-          type="search"
-          value={search}
-          onChange={(event) => updateSearch(event.target.value)}
-          placeholder="Try: van gogh, canvas, mona"
-        />
+          {state.status === 'error' ? (
+            <section className={styles.notice} role="alert">
+              <h2>The collection is closed for a moment</h2>
+              <p>We could not reach the catalogue. Check your connection and try again.</p>
+              <button type="button" className={styles.button} onClick={retry}>
+                Try again
+              </button>
+            </section>
+          ) : null}
 
-        <p className={styles.resultLabel} role="status" aria-live="polite">{resultLabel}</p>
+          {isEmpty ? (
+            <section className={styles.notice}>
+              <h2>Nothing on the walls for “{search.trim()}”</h2>
+              <p>Try an artist&apos;s surname, a medium such as “canvas”, or a year.</p>
+              <button type="button" className={styles.button} onClick={() => setSearch('')}>
+                Show the whole collection
+              </button>
+            </section>
+          ) : null}
 
-        {!isLoading && !error && artworks.length === 0 ? (
-          <section className={styles.emptyState}>
-            <h2>No artwork matches this search</h2>
-            <p>Try an artist, title, or medium, or return to the full collection.</p>
-            <button type="button" onClick={() => updateSearch('')}>Show all artworks</button>
-          </section>
-        ) : null}
-        <div className={styles.grid}>
-          {artworks.map((artwork) => (
-            <article key={artwork.id} className={styles.card}>
-              <h2>{artwork.title}</h2>
-              <p>{artwork.artist}</p>
-              <p>{artwork.year}</p>
-              <p>{artwork.medium}</p>
-            </article>
-          ))}
-        </div>
-      </main>
-    </div>
+          <ul
+            className={styles.wall}
+            aria-label="Artworks"
+            aria-busy={state.status === 'loading'}
+            data-stale={state.status !== 'ready' || undefined}
+          >
+            {state.status === 'loading' && state.artworks.length === 0
+              ? Array.from({ length: 6 }, (_, index) => (
+                  <li key={index} className={`${styles.piece} ${styles.placeholder}`} aria-hidden="true">
+                    <div className={styles.canvas} />
+                    <div className={styles.placeholderLine} />
+                  </li>
+                ))
+              : state.artworks.map((artwork) => <ArtworkCard key={artwork.id} artwork={artwork} />)}
+          </ul>
+        </main>
+
+        <footer className={styles.footer}>
+          <p>Catalogue data is local to this project; tones stand in for images.</p>
+        </footer>
+      </div>
+    </>
   )
 }
 

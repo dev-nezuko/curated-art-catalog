@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import { createMocks, RequestMethod } from 'node-mocks-http'
 import handler, { ArtworksResponse, ErrorResponse } from '../../pages/api/artworks'
 import { artworks } from '../../data/artworks'
+import { DEFAULT_LIMIT } from '../../lib/artworkFilters'
 
 const call = (method: RequestMethod, query: Record<string, string | string[]> = {}) => {
   const { req, res } = createMocks({ method, query })
@@ -38,7 +39,7 @@ describe('/api/artworks', () => {
   })
 
   it.each(['0.5', '-2', 'NaN', '0x2'])('ignores the invalid limit %s', (limit) => {
-    expect(body<ArtworksResponse>(call('GET', { limit })).returned).toBe(artworks.length)
+    expect(body<ArtworksResponse>(call('GET', { limit })).returned).toBe(Math.min(artworks.length, DEFAULT_LIMIT))
   })
 
   it('uses the first value of repeated parameters', () => {

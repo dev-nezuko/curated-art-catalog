@@ -15,6 +15,10 @@ describe('normalizeQuery', () => {
     expect(normalizeQuery('  Van   Gogh ')).toBe('van gogh')
   })
 
+  it('treats commas and semicolons as word separators', () => {
+    expect(normalizeQuery('Velázquez, 1656; canvas')).toBe('velazquez 1656 canvas')
+  })
+
   it('uses the first value of a repeated parameter', () => {
     expect(normalizeQuery(['Mona Lisa', 'Scream'])).toBe('mona lisa')
     expect(normalizeQuery([])).toBe('')
