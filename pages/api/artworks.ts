@@ -1,39 +1,32 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { artworks } from '../../data/artworks'
-import { filterArtworks, normalizeLimit, normalizeQuery } from '../../lib/artworkFilters'
+import { Artwork, artworks } from '../../data/artworks'
+import { matchArtworks, normalizeLimit, normalizeQuery } from '../../lib/artworkFilters'
 
-type SuccessData = {
-  data: typeof artworks
+export type ArtworksResponse = {
+  data: Artwork[]
   total: number
   returned: number
 }
 
-type ErrorData = {
+export type ErrorResponse = {
   error: string
 }
 
 export default function handler(
   req: NextApiRequest,
-  res: NextApiResponse<SuccessData | ErrorData>
+  res: NextApiResponse<ArtworksResponse | ErrorResponse>
 ) {
-  if (req.method !== 'GET') {
-    res.setHeader('Allow', ['GET'])
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    res.setHeader('Allow', 'GET, HEAD')
     return res.status(405).json({ error: 'Method Not Allowed' })
   }
 
-  try {
-    const searchTerm = normalizeQuery(req.query.search)
-    const limit = normalizeLimit(req.query.limit)
-    const matches = filterArtworks(artworks, searchTerm, artworks.length)
-    const filtered = matches.slice(0, limit)
+  const matches = matchArtworks(artworks, normalizeQuery(req.query.search))
+  const page = matches.slice(0, normalizeLimit(req.query.limit))
 
-    return res.status(200).json({
-      data: filtered,
-      total: matches.length,
-      returned: filtered.length,
-    })
-  } catch {
-    // Keeps API responses predictable in production failures.
-    return res.status(500).json({ error: 'Unexpected server error' })
-  }
+  return res.status(200).json({
+    data: page,
+    total: matches.length,
+    returned: page.length,
+  })
 }

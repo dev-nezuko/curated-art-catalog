@@ -17,7 +17,7 @@ export const artworks: Artwork[] = [
   {
     id: 2,
     title: 'The Persistence of Memory',
-    artist: 'Salvador Dali',
+    artist: 'Salvador Dalí',
     year: 1931,
     medium: 'Oil on canvas',
   },
