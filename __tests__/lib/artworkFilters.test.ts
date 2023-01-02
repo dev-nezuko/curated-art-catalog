@@ -16,6 +16,7 @@ describe('artworkFilters', () => {
   it('normalizes limit with defaults and max bounds', () => {
     expect(normalizeLimit(undefined)).toBe(10)
     expect(normalizeLimit('0')).toBe(10)
+    expect(normalizeLimit('0.5')).toBe(10)
     expect(normalizeLimit('200')).toBe(MAX_LIMIT)
     expect(normalizeLimit(['3'])).toBe(3)
     expect(normalizeLimit('2.8')).toBe(2)

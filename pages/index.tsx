@@ -11,11 +11,12 @@ const Home = () => {
 
   useEffect(() => {
     let isMounted = true
+    const controller = new AbortController()
 
     const fetchArtworks = async () => {
       try {
         const query = search.trim() ? `?search=${encodeURIComponent(search.trim())}` : ''
-        const response = await fetch(`/api/artworks${query}`)
+        const response = await fetch(`/api/artworks${query}`, { signal: controller.signal })
 
         if (!response.ok) {
           throw new Error('Unable to fetch artworks')
@@ -43,6 +44,7 @@ const Home = () => {
 
     return () => {
       isMounted = false
+      controller.abort()
     }
   }, [search])
 
@@ -66,10 +68,11 @@ const Home = () => {
       </Head>
 
       <main className={styles.main}>
-        <h1 className={styles.title}>Art Gallery</h1>
+        <p className={styles.eyebrow}>THE STUDY COLLECTION · 01</p>
+        <h1 className={styles.title}>A closer look.</h1>
 
         <p className={styles.description}>
-          Explore classic artwork and filter by title, artist, or medium.
+          Five familiar works, catalogued by artist, medium, and year. A text-only collection for curious browsing.
         </p>
 
         <label className={styles.searchLabel} htmlFor="search">
@@ -84,18 +87,21 @@ const Home = () => {
           placeholder="Try: van gogh, canvas, mona"
         />
 
-        <p className={styles.resultLabel}>{resultLabel}</p>
+        <p className={styles.resultLabel} role="status" aria-live="polite">{resultLabel}</p>
+        {!isLoading && !error && artworks.length === 0 && <p className={styles.empty}>No matches in this small collection. Try an artist or clear the search.</p>}
 
-        <div className={styles.grid}>
-          {artworks.map((artwork) => (
+        <div className={styles.grid} aria-busy={isLoading}>
+          {!isLoading && !error && artworks.map((artwork) => (
             <article key={artwork.id} className={styles.card}>
+              <span className={styles.catalogueNumber}>CAT. {String(artwork.id).padStart(2, '0')}</span>
               <h2>{artwork.title}</h2>
               <p>{artwork.artist}</p>
-              <p>{artwork.year}</p>
+              <p className={styles.year}>{artwork.year}</p>
               <p>{artwork.medium}</p>
             </article>
           ))}
         </div>
+        <footer className={styles.footer}>A catalogue of five works · Metadata only, no artwork reproductions</footer>
       </main>
     </div>
   )
