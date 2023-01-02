@@ -1,0 +1,14 @@
+.git
+.github
+node_modules
+.next
+out
+build
+coverage
+docs
+*.log
+.env
+.env.*
+!.env.example
+project_venv
+next-env.d.ts
