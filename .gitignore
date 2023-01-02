@@ -1,0 +1,45 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# environment (keep the template)
+.env
+.env.*
+!.env.example
+
+# python / misc stray environments
+project_venv/
+.venv/
+
+# caches, logs, temp
+.cache/
+.eslintcache
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+tmp/
+
+# misc
+.DS_Store
+*.pem
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+
+# editor / tooling folders that are not part of the project
+.github/
