@@ -38,13 +38,17 @@ const Home = () => {
       }
     }
 
-    setIsLoading(true)
     fetchArtworks()
 
     return () => {
       isMounted = false
     }
   }, [search])
+
+  const updateSearch = (value: string) => {
+    setIsLoading(true)
+    setSearch(value)
+  }
 
   const resultLabel = useMemo(() => {
     if (isLoading) {
@@ -80,7 +84,7 @@ const Home = () => {
           className={styles.searchInput}
           type="search"
           value={search}
-          onChange={(event) => setSearch(event.target.value)}
+          onChange={(event) => updateSearch(event.target.value)}
           placeholder="Try: van gogh, canvas, mona"
         />
 
@@ -90,7 +94,7 @@ const Home = () => {
           <section className={styles.emptyState}>
             <h2>No artwork matches this search</h2>
             <p>Try an artist, title, or medium, or return to the full collection.</p>
-            <button type="button" onClick={() => setSearch('')}>Show all artworks</button>
+            <button type="button" onClick={() => updateSearch('')}>Show all artworks</button>
           </section>
         ) : null}
         <div className={styles.grid}>
